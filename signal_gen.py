@@ -9,9 +9,9 @@ N_SAMPLES = int(SAMPLE_RATE * DURATION)
 
 def generate_base_signal(f_base=60, harmonics=[120, 180], noise_std=0.05, amplitude=1.0):
     t = np.linspace(0, DURATION, N_SAMPLES, endpoint=False)
-    signal = amplitude * np.sin(2 * np.pi * f_base * t)
+    signal = amplitude * np.sin(2 * np.pi * (f_base + np.random.normal(0, noise_std/4)) * t)
     for h in harmonics:
-        signal += (amplitude / 2) * np.sin(2 * np.pi * h * t)
+        signal += (amplitude / 2) * np.sin(2 * np.pi * (h + np.random.normal(0, noise_std/4)) * t)
     noise = np.random.normal(0, noise_std, size=t.shape)
     return signal + noise
 
@@ -59,6 +59,38 @@ def prepare_for_pytorch(X):
     # Reshape to (batch, 1, length)
     X = X[:, np.newaxis, :]
     return X.astype(np.float32)
+
+import torchaudio
+import torch
+
+def load_and_chunk_wav_with_overlap(file_path, label, chunk_size=1000, overlap=0.5):
+    # Load audio
+    waveform, sample_rate = torchaudio.load(file_path)
+
+    # Check sample rate
+    if sample_rate != 1000:
+        raise ValueError(f"Expected 1000 Hz, got {sample_rate}")
+
+    # Convert to mono
+    if waveform.shape[0] > 1:
+        waveform = waveform.mean(dim=0, keepdim=True)  # [1, N]
+
+    step = int(chunk_size * (1 - overlap))
+    total_samples = waveform.shape[1]
+
+    chunks = []
+    labels = []
+
+    for start in range(0, total_samples - chunk_size + 1, step):
+        chunk = waveform[:, start:start+chunk_size]  # shape: [1, 1000]
+        chunk = chunk.squeeze(0)
+        chunks.append(chunk)
+        labels.append(label)
+
+    chunks = torch.stack(chunks).numpy()  # shape: [num_chunks, 1, 1000]
+    labels = torch.tensor(labels).numpy()  # shape: [num_chunks]
+
+    return chunks, labels
 
 
 import torch
