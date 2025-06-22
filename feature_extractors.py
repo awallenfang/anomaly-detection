@@ -80,11 +80,11 @@ class MFCCFeatures(nn.Module):
         super().__init__()
         self.mfcc_transform = T.MFCC(
             sample_rate=sample_rate,
-            n_mfcc=16,
+            n_mfcc=40,
             melkwargs={
-                'n_fft': 256,
-                'hop_length': 128,
-                'n_mels': 40
+                'n_fft': 512,
+                'hop_length': 64,
+                'n_mels': 80
             }
         )
 
@@ -94,6 +94,7 @@ class MFCCFeatures(nn.Module):
             signal = X[i]  # shape: [1, signal_len]
             mfcc = self.mfcc_transform(signal)  # shape: [1, n_mfcc, time]
             mfcc = mfcc.squeeze(0)         # shape: [n_mfcc, time]
+            mfcc = (mfcc - mfcc.mean()) / (mfcc.std() + 1e-6)
             mfcc_flat = mfcc.flatten()     # shape: [n_mfcc * time]
             mfcc_features.append(mfcc_flat)
 

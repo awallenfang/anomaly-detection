@@ -43,7 +43,7 @@ for file, label in file_and_label:
 print("Preparing dataset")
 X = prepare_for_pytorch(X)
 
-method = "cnn"
+method = "mfcc"
 if method == "cnn":
     print("Using CNN")
     encoder = train_cnn(X, y)
@@ -99,7 +99,7 @@ from sklearn.pipeline import make_pipeline
 
 print("Training SVM")
 # Normalize features
-pipeline = make_pipeline(StandardScaler(), OneClassSVM(nu=0.05, kernel="rbf", gamma='scale', verbose=True))
+pipeline = make_pipeline(StandardScaler(), OneClassSVM(nu=0.02, kernel="rbf", gamma='scale', verbose=True))
 pipeline.fit(train_features)
 
 
@@ -108,7 +108,6 @@ joblib.dump(pipeline, "svm_pipeline.pkl")
 
 pred = pipeline.predict(test_features)
 unique, counts = np.unique(pred, return_counts=True)
-print("Predicted labels distribution:", dict(zip(unique, counts)))
 # One-Class SVM outputs: 1 (inlier), -1 (outlier)
 # You may need to map: -1 → 1 (anomaly), 1 → 0 (normal)
 if np.min(pred) == -1:
