@@ -1,3 +1,4 @@
+import joblib
 import os
 
 import torch
@@ -6,28 +7,27 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 import numpy as np
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
-import matplotlib.pyplot as plt
-from sklearn.svm import SVC, OneClassSVM
+from sklearn.svm import OneClassSVM
 from sklearn.preprocessing import StandardScaler
 
-
-from encoder import CNNEncoder
-from decoder import CNNDecoder
-from signal_gen import generate_dataset, prepare_for_pytorch, VibrationDataset, load_and_chunk_wav_with_overlap
+from signal_gen import prepare_for_pytorch, VibrationDataset, load_and_chunk_wav_with_overlap
 from feature_extractors import train_cnn, MFCCFeatures
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
 print("Generating dataset")
-file_and_label = [("training_audio/vibration.flac", 0),
-("training_audio/vibration_2.flac", 0),
-("training_audio/vibration_3.flac", 0),
-("training_audio/anomalous.flac", 1),
-("training_audio/anomalous_object.flac", 1),
-("training_audio/anomalous_one_off.flac", 1),
-# ("training_audio/anomalous_2.flac", 1)
-]
+file_and_label = []
+
+normal_names = os.listdir("training_audio/normal")
+for name in normal_names:
+    if name.endswith(".flac"):
+        file_and_label.append(("training_audio/normal/"+name, 0))
+
+anomalous_names = os.listdir("training_audio/anomaly")
+for name in anomalous_names:
+    if name.endswith(".flac"):
+        file_and_label.append(("training_audio/anomaly/"+name, 1))
+
 X = None
 y = None
 for file, label in file_and_label:
@@ -43,10 +43,10 @@ for file, label in file_and_label:
 print("Preparing dataset")
 X = prepare_for_pytorch(X)
 
-method = "mfcc"
+method = "cnn"
 if method == "cnn":
     print("Using CNN")
-    encoder = train_cnn()
+    encoder = train_cnn(X, y)
 else:
     print("Using MFCC")
     encoder = MFCCFeatures()
@@ -102,7 +102,6 @@ print("Training SVM")
 pipeline = make_pipeline(StandardScaler(), OneClassSVM(nu=0.05, kernel="rbf", gamma='scale', verbose=True))
 pipeline.fit(train_features)
 
-import joblib
 
 # Assuming your pipeline is named `pipeline`
 joblib.dump(pipeline, "svm_pipeline.pkl")

@@ -9,9 +9,8 @@ import time
 from feature_extractors import MFCCFeatures
 # Assuming your pipeline is named `pipeline`
 pipeline = joblib.load("svm_pipeline.pkl")
-print(pipeline)
 
-mfcc_transform = MFCCFeatures()
+extractor = MFCCFeatures()
 
 # Configuration
 SAMPLE_RATE = 1000
@@ -24,12 +23,12 @@ audio_buffer = deque(maxlen=WINDOW_SIZE)
 def classify_chunk(chunk):
     # Convert to torch tensor
     waveform = torch.tensor(chunk, dtype=torch.float32).unsqueeze(0)  # [1, 1000]
-    mfcc = mfcc_transform(waveform)       # [1, n_mfcc, time]
-    mfcc_flat = mfcc.flatten().numpy()    # [n_features]
+    feature = extractor(waveform)       # [1, n_mfcc, time]
+    feature_flat = feature.flatten().numpy()    # [n_features]
     
     # Predict
-    pred = pipeline.predict([mfcc_flat])[0]
-    score = pipeline.decision_function([mfcc_flat])
+    pred = pipeline.predict([feature_flat])[0]
+    score = pipeline.decision_function([feature_flat])
     if score <= -1:
         pred = 1
     else:

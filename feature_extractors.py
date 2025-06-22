@@ -18,8 +18,10 @@ from encoder import CNNEncoder
 from decoder import CNNDecoder
 from signal_gen import generate_dataset, prepare_for_pytorch, VibrationDataset, load_and_chunk_wav_with_overlap
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def train_cnn(latent_dim = 64):
+
+def train_cnn(X, y, latent_dim = 64):
     # If encoder exists on disk, do no training
     if not os.path.isfile("./encoder.pth"):
         class CNNAutoencoder(nn.Module):
