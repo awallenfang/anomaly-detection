@@ -7,12 +7,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
-import numpy as np
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
-import matplotlib.pyplot as plt
-from sklearn.svm import SVC, OneClassSVM
-from sklearn.preprocessing import StandardScaler
-
 
 from encoder import CNNEncoder
 from decoder import CNNDecoder

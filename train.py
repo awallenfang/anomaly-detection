@@ -43,7 +43,7 @@ for file, label in file_and_label:
 print("Preparing dataset")
 X = prepare_for_pytorch(X)
 
-method = "mfcc"
+method = "mcc"
 if method == "cnn":
     print("Using CNN")
     encoder = train_cnn(X, y)
